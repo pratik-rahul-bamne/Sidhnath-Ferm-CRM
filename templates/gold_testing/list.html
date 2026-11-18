@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Gold Testing Records{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🔬 Gold Testing Services</h1>
+        <p class="page-subtitle">स्वर्ण शुद्धता परीक्षण अभिलेख · Manage assay records, view reports & print certificates</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ url_for('gold_testing_new') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #d4af37 0%, #aa771c 100%); border-color: #aa771c; color: #fff;">
+            ➕ New Gold Test
+        </a>
+        <a href="{{ url_for('gold_testing_sample') }}" class="btn btn-outline">
+            📜 Sample Bill
+        </a>
+    </div>
+</div>
+
+<!-- Stats Summary Strip -->
+<div class="cards-grid">
+    <div class="stat-card" style="border-left: 4px solid #d4af37;">
+        <div class="stat-icon" style="background: #fff8e1; color: #d4af37;">🔬</div>
+        <div class="stat-info">
+            <span class="stat-label">Total Gold Tests</span>
+            <span class="stat-value">{{ stats.total_count }}</span>
+            <span class="stat-sub">Lifetime tests conducted</span>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #b8860b;">
+        <div class="stat-icon" style="background: #fff8e1; color: #b8860b;">📅</div>
+        <div class="stat-info">
+            <span class="stat-label">Today's Tests</span>
+            <span class="stat-value">{{ stats.today_count }}</span>
+            <span class="stat-sub">Tests recorded today</span>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #2a9d8f;">
+        <div class="stat-icon" style="background: #e8f5e9; color: #2a9d8f;">💰</div>
+        <div class="stat-info">
+            <span class="stat-label">Today's Revenue</span>
+            <span class="stat-value">₹{{ "%.0f"|format(stats.today_revenue) }}</span>
+            <span class="stat-sub">From gold testing</span>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #457b9d;">
+        <div class="stat-icon" style="background: #e1f5fe; color: #457b9d;">💎</div>
+        <div class="stat-info">
+            <span class="stat-label">Total Gold Revenue</span>
+            <span class="stat-value">₹{{ "%.0f"|format(stats.total_revenue) }}</span>
+            <span class="stat-sub">Lifetime assay revenue</span>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="table-card">
+    <div class="table-toolbar" style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color, #e9ecef);">
+        <form method="GET" action="{{ url_for('gold_testing_list') }}" style="display: flex; gap: 0.75rem; flex-wrap: wrap; flex: 1;">
+            <input type="text" name="search" class="form-input form-input-sm" style="min-width: 260px;" placeholder="Search customer, mobile, receipt no..." value="{{ search }}">
+            <input type="date" name="from_date" class="form-input form-input-sm" value="{{ from_date }}">
+            <input type="date" name="to_date" class="form-input form-input-sm" value="{{ to_date }}">
+            <button type="submit" class="btn btn-secondary btn-sm">🔍 Filter</button>
+            {% if search or from_date or to_date %}
+            <a href="{{ url_for('gold_testing_list') }}" class="btn btn-outline btn-sm">Reset</a>
+            {% endif %}
+        </form>
+        <span class="text-muted" style="font-size: 0.875rem;">Showing {{ tests|length }} record(s)</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Receipt No</th>
+                    <th>Date</th>
+                    <th>Customer Name</th>
+                    <th>Contact No</th>
+                    <th>Items & Samples</th>
+                    <th>Avg Purity</th>
+                    <th>Grand Total</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if tests %}
+                    {% for t in tests %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('gold_testing_view', test_id=t.id) }}" style="font-weight: 700; color: #b8860b; text-decoration: none;">
+                                {{ t.receipt_no }}
+                            </a>
+                        </td>
+                        <td>{{ t.test_date.strftime('%d %b %Y') if t.test_date else '' }}</td>
+                        <td>
+                            <strong>{{ t.customer_name }}</strong>
+                            {% if t.address %}
+                            <div style="font-size: 0.75rem; color: var(--text-muted, #6c757d);">{{ t.address }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ t.contact_no or '—' }}</td>
+                        <td>
+                            <span class="badge" style="background: #fff8e1; color: #b8860b; border: 1px solid #ffe082;">
+                                {{ t.item_count }} item(s) ({{ "%.3f"|format(t.total_weight) }}g)
+                            </span>
+                        </td>
+                        <td>
+                            <strong style="color: #d4af37;">{{ "%.2f"|format(t.avg_karat) }}K</strong>
+                            <small class="text-muted">({{ "%.1f"|format(t.avg_percent) }}%)</small>
+                        </td>
+                        <td>
+                            <strong>₹{{ "%.2f"|format(t.grand_total) }}</strong>
+                            <div style="font-size: 0.75rem; color: #2a9d8f;">Paid: ₹{{ "%.2f"|format(t.amount_received) }}</div>
+                        </td>
+                        <td>
+                            {% if t.balance_amount <= 0 %}
+                            <span class="badge badge-success">PAID</span>
+                            {% elif t.amount_received > 0 %}
+                            <span class="badge badge-warning">PARTIAL</span>
+                            {% else %}
+                            <span class="badge badge-danger">UNPAID</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <a href="{{ url_for('gold_testing_view', test_id=t.id) }}" class="btn btn-secondary btn-sm" title="View & Print Bill">
+                                👁️ View
+                            </a>
+                            <a href="{{ url_for('gold_testing_pdf', test_id=t.id) }}" class="btn btn-outline btn-sm" title="Download PDF">
+                                ⬇️ PDF
+                            </a>
+                            {% if session.role == 'admin' %}
+                            <form method="POST" action="{{ url_for('gold_testing_delete', test_id=t.id) }}" style="display:inline" onsubmit="return confirm('Delete Gold Testing Receipt {{ t.receipt_no }}?')">
+                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">🗑</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted, #6c757d);">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔬</div>
+                            <p style="font-size: 1rem; font-weight: 500;">No gold testing records found.</p>
+                            <a href="{{ url_for('gold_testing_new') }}" class="btn btn-primary btn-sm" style="margin-top: 0.5rem; background: #b8860b;">
+                                ➕ Record First Gold Test
+                            </a>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+

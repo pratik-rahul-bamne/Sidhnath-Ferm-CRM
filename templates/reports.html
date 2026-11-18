@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">📊 Reports & Business Analytics</h1>
+        <p class="page-subtitle">Revenue overview across polish, jewelry, and assay testing services</p>
+    </div>
+</div>
+
+<!-- Report Type Toggle -->
+<div class="report-controls" style="margin-bottom: 1.5rem;">
+    <div class="toggle-group">
+        <a href="{{ url_for('reports', type='daily', date=sel_date) }}"
+            class="toggle-btn {% if report_type == 'daily' %}active{% endif %}">📅 Daily Report</a>
+        <a href="{{ url_for('reports', type='monthly') }}"
+            class="toggle-btn {% if report_type == 'monthly' %}active{% endif %}">📆 30-Day Overview</a>
+    </div>
+    {% if report_type == 'daily' %}
+    <form method="GET" class="date-picker-form">
+        <input type="hidden" name="type" value="daily">
+        <input type="date" name="date" value="{{ sel_date }}" class="form-input" style="width:180px"
+            onchange="this.form.submit()">
+    </form>
+    {% endif %}
+</div>
+
+<!-- Summary Cards (6-Cards Grid) -->
+<div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+    <div class="stat-card stat-card--revenue">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info">
+            <span class="stat-label">Total Revenue</span>
+            <span class="stat-value">₹{{ "%.2f"|format(total_rev) }}</span>
+            <span class="stat-sub">All departments</span>
+        </div>
+    </div>
+    <div class="stat-card stat-card--gold-test">
+        <div class="stat-icon">🔬</div>
+        <div class="stat-info">
+            <span class="stat-label">Gold Testing Rev</span>
+            <span class="stat-value">₹{{ "%.2f"|format(gold_test_summary.total|float) }}</span>
+            <span class="stat-sub">{{ gold_test_summary.cnt }} assay tests</span>
+        </div>
+    </div>
+    <div class="stat-card stat-card--silver-test">
+        <div class="stat-icon">🧪</div>
+        <div class="stat-info">
+            <span class="stat-label">Silver Testing Rev</span>
+            <span class="stat-value">₹{{ "%.2f"|format(silver_test_summary.total|float) }}</span>
+            <span class="stat-sub">{{ silver_test_summary.cnt }} assay tests</span>
+        </div>
+    </div>
+    <div class="stat-card stat-card--silver">
+        <div class="stat-icon">🥈</div>
+        <div class="stat-info">
+            <span class="stat-label">Silver Polish</span>
+            <span class="stat-value">₹{{ "%.2f"|format(silver_summary.total|float) }}</span>
+            <span class="stat-sub">{{ silver_summary.cnt }} bills</span>
+        </div>
+    </div>
+    <div class="stat-card stat-card--gold">
+        <div class="stat-icon">🥇</div>
+        <div class="stat-info">
+            <span class="stat-label">Gold Polish</span>
+            <span class="stat-value">₹{{ "%.2f"|format(gold_summary.total|float) }}</span>
+            <span class="stat-sub">{{ gold_summary.cnt }} bills</span>
+        </div>
+    </div>
+    <div class="stat-card stat-card--pending">
+        <div class="stat-icon">💍</div>
+        <div class="stat-info">
+            <span class="stat-label">Jewelry Box</span>
+            <span class="stat-value">₹{{ "%.2f"|format(jewelry_summary.total|float) }}</span>
+            <span class="stat-sub">{{ jewelry_summary.cnt }} items</span>
+        </div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="chart-section" style="margin-bottom: 2rem;">
+    <div class="chart-card">
+        <h3 class="chart-title">
+            {% if report_type == 'daily' %}Daily Revenue Breakdown by Customer (₹){% else %}30-Day Combined Revenue Trend (₹){% endif %}
+        </h3>
+        <canvas id="reportChart" height="90"></canvas>
+    </div>
+</div>
+
+{% if report_type == 'daily' and (silver_records or gold_records) %}
+<!-- Detail Records -->
+<div class="recent-grid">
+    {% if silver_records %}
+    <div class="recent-card">
+        <h3 class="recent-title">🥈 Silver Bills ({{ sel_date }})</h3>
+        <table class="mini-table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Weight</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in silver_records %}
+                <tr>
+                    <td>{{ r.customer_name }}</td>
+                    <td>{{ "%.3f"|format(r.silver_weight) }}g</td>
+                    <td class="amount-cell">₹{{ "%.2f"|format(r.total_amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if gold_records %}
+    <div class="recent-card">
+        <h3 class="recent-title">🥇 Gold Bills ({{ sel_date }})</h3>
+        <table class="mini-table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Weight</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in gold_records %}
+                <tr>
+                    <td>{{ r.customer_name }}</td>
+                    <td>{{ "%.3f"|format(r.gold_weight) }}g</td>
+                    <td class="gold-amount">₹{{ "%.2f"|format(r.total_amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    Chart.defaults.font.family = 'Poppins, sans-serif';
+    Chart.defaults.color = '#6B7280';
+    const ctx = document.getElementById('reportChart').getContext('2d');
+    const isDaily = "{{ report_type }}" === "daily";
+
+    new Chart(ctx, {
+        type: isDaily ? 'bar' : 'line',
+        data: {
+            labels: {{ chart_labels | tojson }},
+            datasets: [
+                {
+                    label: isDaily ? 'Silver Polish Amount (₹)' : 'Total Business Revenue (₹)',
+                    data: {{ chart_data | tojson }},
+                    backgroundColor: isDaily ? 'rgba(192,192,192,0.6)' : 'rgba(212,175,55,0.1)',
+                    borderColor: isDaily ? '#A0A0A0' : '#D4AF37',
+                    borderWidth: 2,
+                    fill: !isDaily,
+                    tension: 0.35,
+                    borderRadius: isDaily ? 6 : 0
+                },
+                {% if not (report_type == 'daily') %}
+                {
+                    label: 'Gold Combined (₹)',
+                    data: {{ gold_chart_data | tojson }},
+                    borderColor: '#F59E0B',
+                    backgroundColor: 'rgba(245,158,11,0.05)',
+                    borderWidth: 1.5,
+                    fill: false,
+                    tension: 0.35
+                }
+                {% endif %}
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { usePointStyle: true, padding: 15 } },
+                tooltip: {
+                    backgroundColor: '#fff',
+                    titleColor: '#111827',
+                    bodyColor: '#6B7280',
+                    borderColor: '#E5E7EB',
+                    borderWidth: 1,
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: { label: ctx => ' ₹' + ctx.parsed.y.toLocaleString() }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => '₹' + v.toLocaleString() },
+                    grid: { color: '#F3F4F6' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+</script>
+{% endblock %}

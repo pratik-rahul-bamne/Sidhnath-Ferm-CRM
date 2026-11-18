@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Gold Bill #{{ bill.id }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🧾 Gold Bill #GB-{{ "%04d"|format(bill.id) }}</h1>
+        <p class="page-subtitle">{{ bill.date.strftime('%d %B %Y') }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ url_for('gold_bill_pdf', bill_id=bill.id) }}" class="btn btn-gold">⬇ Download PDF</a>
+        <a href="{{ url_for('gold_bills_list') }}" class="btn btn-ghost">← All Bills</a>
+    </div>
+</div>
+
+<div class="bill-preview bill-preview--gold">
+    <div class="bill-header-section">
+        <div>
+            <h2 class="bill-firm-name">💎 Siddhanth Firm</h2>
+            <p class="bill-firm-sub">Gold Polish Receipt</p>
+        </div>
+        <div class="bill-meta">
+            <div class="bill-meta-item"><span>Bill No:</span><strong>GB-{{ "%04d"|format(bill.id) }}</strong></div>
+            <div class="bill-meta-item"><span>Date:</span><strong>{{ bill.date.strftime('%d/%m/%Y') }}</strong></div>
+        </div>
+    </div>
+
+    <div class="bill-customer-section">
+        <div><span class="bill-label">Customer:</span> <strong>{{ bill.customer_name }}</strong></div>
+        <div><span class="bill-label">Contact:</span> {{ bill.contact_no or '—' }}</div>
+    </div>
+
+    <table class="bill-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Rate</th>
+                <th>Weight / Qty</th>
+                <th>Amount (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Gold Processing</td>
+                <td>₹{{ "%.2f"|format(bill.gold_price) }}/g</td>
+                <td>{{ "%.3f"|format(bill.gold_weight) }} g</td>
+                <td>₹{{ "%.2f"|format(bill.gold_weight * bill.gold_price) }}</td>
+            </tr>
+            <tr>
+                <td>Gold Gram Charge</td>
+                <td>₹{{ "%.2f"|format(bill.gold_gram_price) }}/g</td>
+                <td>{{ "%.3f"|format(bill.gold_gram) }} g</td>
+                <td>₹{{ "%.2f"|format(bill.gold_gram * bill.gold_gram_price) }}</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr class="total-row total-row--gold">
+                <td colspan="3"><strong>TOTAL AMOUNT</strong></td>
+                <td><strong>₹{{ "%.2f"|format(bill.total_amount) }}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+    <div class="bill-footer">Thank you for your business! 🙏</div>
+</div>
+
+{% if session.role == 'admin' %}
+<form method="POST" action="{{ url_for('gold_bill_delete', bill_id=bill.id) }}"
+    onsubmit="return confirm('Delete this bill permanently?')" style="margin-top:1rem;text-align:center">
+    <button type="submit" class="btn btn-danger">🗑 Delete Bill</button>
+</form>
+{% endif %}
+{% endblock %}

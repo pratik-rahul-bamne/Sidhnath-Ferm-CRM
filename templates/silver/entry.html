@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}New Silver Entry{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🥈 New Silver Entry</h1>
+        <p class="page-subtitle">Add a new silver polish job</p>
+    </div>
+    <a href="{{ url_for('silver_list') }}" class="btn btn-ghost">← Back to Entries</a>
+</div>
+
+<div class="form-card">
+    <form method="POST" action="{{ url_for('silver_entry') }}">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">Customer Name *</label>
+                <input type="text" name="customer_name" class="form-input" required placeholder="Enter customer name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Contact Number</label>
+                <input type="tel" name="contact_no" class="form-input" placeholder="10-digit mobile number">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date *</label>
+                <input type="date" name="date" class="form-input" value="{{ today }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Silver Weight (grams) *</label>
+                <input type="number" name="silver_weight" class="form-input" step="0.001" min="0.001" required
+                    placeholder="e.g. 25.500">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Polish Type *</label>
+                <select name="polish_type" class="form-input">
+                    <option value="without_p">Without Polish</option>
+                    <option value="with_p">With Polish</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-input">
+                    <option value="entry">Entry (Received)</option>
+                    <option value="exit">Exit (Delivered)</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">✅ Save Entry</button>
+            <a href="{{ url_for('silver_list') }}" class="btn btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

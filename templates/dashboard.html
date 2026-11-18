@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Good {{ 'Morning' if now().hour < 12 else ('Afternoon' if now().hour < 17 else 'Evening') }}, {{ session.user_name.split()[0] }}! 👋</h1>
+        <p class="page-subtitle">{{ now().strftime('%A, %d %B %Y') }} · Siddhanth Firm Business & Testing Overview</p>
+    </div>
+</div>
+
+<!-- Primary Stat Cards (6 Cards Grid) -->
+<div class="cards-grid">
+    <!-- Total Revenue Card -->
+    <div class="stat-card stat-card--revenue">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info">
+            <span class="stat-label">Today's Revenue</span>
+            <span class="stat-value">₹{{ "%.0f"|format(today_revenue) }}</span>
+            <span class="stat-sub">Polish + Jewelry + Testing</span>
+        </div>
+        <div class="stat-badge">TODAY</div>
+    </div>
+
+    <!-- Gold Testing Card (Mandatory Requirement 6) -->
+    <div class="stat-card stat-card--gold-test">
+        <div class="stat-icon">🔬</div>
+        <div class="stat-info">
+            <span class="stat-label">Gold Testing (स्वर्ण टंच)</span>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span class="stat-value">{{ gold_testing_today_cnt }}</span>
+                <span style="font-size: 0.82rem; color: var(--text-muted, #6c757d);">today / {{ gold_testing_total_cnt }} total</span>
+            </div>
+            <span class="stat-sub">Rev: <strong>₹{{ "%.0f"|format(gold_testing_today_rev) }}</strong> (All: ₹{{ "%.0f"|format(gold_testing_total_rev) }})</span>
+            <div class="stat-action"><a href="{{ url_for('gold_testing_list') }}" style="color: #b8860b;">View Tests →</a></div>
+        </div>
+    </div>
+
+    <!-- Silver Testing Card (Mandatory Requirement 6) -->
+    <div class="stat-card stat-card--silver-test">
+        <div class="stat-icon">🧪</div>
+        <div class="stat-info">
+            <span class="stat-label">Silver Testing (रजत टंच)</span>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span class="stat-value">{{ silver_testing_today_cnt }}</span>
+                <span style="font-size: 0.82rem; color: var(--text-muted, #6c757d);">today / {{ silver_testing_total_cnt }} total</span>
+            </div>
+            <span class="stat-sub">Rev: <strong>₹{{ "%.0f"|format(silver_testing_today_rev) }}</strong> (All: ₹{{ "%.0f"|format(silver_testing_total_rev) }})</span>
+            <div class="stat-action"><a href="{{ url_for('silver_testing_list') }}" style="color: #475569;">View Tests →</a></div>
+        </div>
+    </div>
+
+    <!-- Silver Polish Entries -->
+    <div class="stat-card stat-card--silver">
+        <div class="stat-icon">🥈</div>
+        <div class="stat-info">
+            <span class="stat-label">Silver Polish Today</span>
+            <span class="stat-value">{{ silver_today }}</span>
+            <div class="stat-action"><a href="{{ url_for('silver_list') }}">View All →</a></div>
+        </div>
+    </div>
+
+    <!-- Gold Polish Entries -->
+    <div class="stat-card stat-card--gold">
+        <div class="stat-icon">🥇</div>
+        <div class="stat-info">
+            <span class="stat-label">Gold Polish Today</span>
+            <span class="stat-value">{{ gold_today }}</span>
+            <div class="stat-action"><a href="{{ url_for('gold_list') }}">View All →</a></div>
+        </div>
+    </div>
+
+    <!-- Pending Polish Tasks -->
+    <div class="stat-card stat-card--pending">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-info">
+            <span class="stat-label">Pending Polish</span>
+            <span class="stat-value">{{ pending_silver + pending_gold }}</span>
+            <span class="stat-sub">{{ pending_silver }} Silver · {{ pending_gold }} Gold</span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <!-- Testing Service Quick Actions -->
+    <a href="{{ url_for('gold_testing_new') }}" class="quick-btn quick-btn--gold-test">
+        <span class="quick-icon">🔬</span> New Gold Test
+    </a>
+    <a href="{{ url_for('silver_testing_new') }}" class="quick-btn quick-btn--silver-test">
+        <span class="quick-icon">🧪</span> New Silver Test
+    </a>
+    <!-- Polish & Jewelry Quick Actions -->
+    <a href="{{ url_for('silver_entry') }}" class="quick-btn quick-btn--silver">
+        <span class="quick-icon">🥈</span> Silver Polish Entry
+    </a>
+    <a href="{{ url_for('gold_entry') }}" class="quick-btn quick-btn--gold">
+        <span class="quick-icon">🥇</span> Gold Polish Entry
+    </a>
+    <a href="{{ url_for('silver_bill') }}" class="quick-btn quick-btn--bill">
+        <span class="quick-icon">📄</span> Silver Bill
+    </a>
+    <a href="{{ url_for('gold_bill') }}" class="quick-btn quick-btn--bill-gold">
+        <span class="quick-icon">📑</span> Gold Bill
+    </a>
+    <a href="{{ url_for('jewelry_add') }}" class="quick-btn quick-btn--jewelry">
+        <span class="quick-icon">💍</span> Add Jewelry
+    </a>
+</div>
+
+<!-- Revenue Chart -->
+<div class="chart-section">
+    <div class="chart-card">
+        <h3 class="chart-title">📈 7-Day Revenue Overview (Polish, Jewelry & Testing)</h3>
+        <canvas id="revenueChart" height="85"></canvas>
+    </div>
+</div>
+
+<!-- Recent Activity Grids -->
+<div class="recent-grid">
+    <!-- Recent Gold Tests -->
+    <div class="recent-card" style="border-top: 3px solid #d4af37;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 class="recent-title" style="margin: 0;">🔬 Recent Gold Tests</h3>
+            <a href="{{ url_for('gold_testing_list') }}" style="font-size: 0.8rem; color: #b8860b;">View All →</a>
+        </div>
+        {% if recent_gold_tests %}
+        <table class="mini-table">
+            <thead>
+                <tr>
+                    <th>Receipt</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recent_gold_tests %}
+                <tr>
+                    <td><a href="{{ url_for('gold_testing_view', test_id=r.id) }}" style="font-weight: 600; color: #b8860b;">{{ r.receipt_no }}</a></td>
+                    <td><strong>{{ r.customer_name }}</strong></td>
+                    <td>{{ r.item_count }} item(s)</td>
+                    <td class="gold-amount">₹{{ "%.0f"|format(r.grand_total) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">No gold testing records yet.</div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Silver Tests -->
+    <div class="recent-card" style="border-top: 3px solid #64748b;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 class="recent-title" style="margin: 0;">🧪 Recent Silver Tests</h3>
+            <a href="{{ url_for('silver_testing_list') }}" style="font-size: 0.8rem; color: #475569;">View All →</a>
+        </div>
+        {% if recent_silver_tests %}
+        <table class="mini-table">
+            <thead>
+                <tr>
+                    <th>Receipt</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recent_silver_tests %}
+                <tr>
+                    <td><a href="{{ url_for('silver_testing_view', test_id=r.id) }}" style="font-weight: 600; color: #475569;">{{ r.receipt_no }}</a></td>
+                    <td><strong>{{ r.customer_name }}</strong></td>
+                    <td>{{ r.item_count }} item(s)</td>
+                    <td class="amount-cell">₹{{ "%.0f"|format(r.grand_total) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">No silver testing records yet.</div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Silver Polish Bills -->
+    <div class="recent-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 class="recent-title" style="margin: 0;">🥈 Recent Silver Bills</h3>
+            <a href="{{ url_for('silver_bills_list') }}" style="font-size: 0.8rem; color: var(--text-muted, #6c757d);">View All →</a>
+        </div>
+        {% if recent_silver %}
+        <table class="mini-table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Weight</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recent_silver %}
+                <tr>
+                    <td><strong>{{ r.customer_name }}</strong></td>
+                    <td>{{ "%.2f"|format(r.weight) }}g</td>
+                    <td class="amount-cell">₹{{ "%.0f"|format(r.total_amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">No silver bills yet today.</div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Gold Polish Bills -->
+    <div class="recent-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 class="recent-title" style="margin: 0;">🥇 Recent Gold Bills</h3>
+            <a href="{{ url_for('gold_bills_list') }}" style="font-size: 0.8rem; color: var(--text-muted, #6c757d);">View All →</a>
+        </div>
+        {% if recent_gold %}
+        <table class="mini-table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Weight</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recent_gold %}
+                <tr>
+                    <td><strong>{{ r.customer_name }}</strong></td>
+                    <td>{{ "%.2f"|format(r.weight) }}g</td>
+                    <td class="gold-amount">₹{{ "%.0f"|format(r.total_amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">No gold bills yet today.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    Chart.defaults.font.family = 'Poppins, sans-serif';
+    Chart.defaults.color = '#6B7280';
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels | tojson }},
+            datasets: [
+                {
+                    label: 'Gold Testing (₹)',
+                    data: {{ chart_gold_test | tojson }},
+                    borderColor: '#D4AF37',
+                    backgroundColor: 'rgba(212,175,55,0.15)',
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#D4AF37',
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: 'Silver Testing (₹)',
+                    data: {{ chart_silver_test | tojson }},
+                    borderColor: '#64748B',
+                    backgroundColor: 'rgba(100,116,139,0.15)',
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#64748B',
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: 'Silver Polish (₹)',
+                    data: {{ chart_silver | tojson }},
+                    borderColor: '#94A3B8',
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
+                    pointRadius: 3,
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: 'Gold Polish (₹)',
+                    data: {{ chart_gold | tojson }},
+                    borderColor: '#F59E0B',
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
+                    pointRadius: 3,
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: 'Jewelry (₹)',
+                    data: {{ chart_jewelry | tojson }},
+                    borderColor: '#8B5CF6',
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
+                    pointRadius: 3,
+                    fill: false,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { labels: { usePointStyle: true, padding: 15, font: { size: 11, family: 'Poppins' } } },
+                tooltip: {
+                    backgroundColor: '#fff',
+                    titleColor: '#111827',
+                    bodyColor: '#6B7280',
+                    borderColor: '#E5E7EB',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ₹' + ctx.parsed.y.toLocaleString() }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => '₹' + v.toLocaleString(), font: { size: 11 } },
+                    grid: { color: '#F3F4F6', drawBorder: false }
+                },
+                x: {
+                    ticks: { font: { size: 11 } },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

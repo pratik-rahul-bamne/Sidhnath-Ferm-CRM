@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+{% block title %}New Gold Testing{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🔬 New Gold Testing Receipt</h1>
+        <p class="page-subtitle">स्वर्ण शुद्धता परीक्षण · Enter customer details and gold items for assay</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ url_for('gold_testing_list') }}" class="btn btn-secondary">← Back to Records</a>
+        <a href="{{ url_for('gold_testing_sample') }}" class="btn btn-outline" target="_blank">📜 View Sample Bill</a>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('gold_testing_new') }}" id="goldTestForm">
+    <!-- Customer Details Section -->
+    <div class="form-card" style="margin-bottom: 1.5rem;">
+        <h3 class="card-section-title">👤 Customer & Receipt Information</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">Receipt / Certificate No *</label>
+                <input type="text" name="receipt_no" class="form-input" value="{{ next_receipt_no }}" required placeholder="e.g. GT-2026-0001">
+                <small class="form-hint">Auto-generated unique receipt number</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Customer / Party Name *</label>
+                <input type="text" name="customer_name" class="form-input" required placeholder="Full Name or Jewelers Firm">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mobile Number *</label>
+                <input type="tel" name="contact_no" class="form-input" required placeholder="10-digit mobile number">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date of Testing *</label>
+                <input type="date" name="test_date" class="form-input" value="{{ today }}" required>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label">Customer Address</label>
+                <input type="text" name="address" class="form-input" placeholder="Shop / Residential Address, City (e.g. Cinema Road, Hardoi)">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Payment Method</label>
+                <select name="payment_method" class="form-input">
+                    <option value="Cash" selected>Cash (नकद)</option>
+                    <option value="UPI">UPI (GooglePay / PhonePe / Paytm)</option>
+                    <option value="Bank Transfer">Bank Transfer / NEFT</option>
+                    <option value="Card">Card</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Testing Status</label>
+                <select name="testing_status" class="form-input">
+                    <option value="Completed" selected>Completed (परीक्षण पूर्ण)</option>
+                    <option value="In-Progress">In-Progress (प्रक्रिया में)</option>
+                    <option value="Pending">Pending (लंबित)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gold Items Section -->
+    <div class="form-card" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+                <h3 class="card-section-title" style="margin-bottom: 0.25rem;">🥇 Gold Testing Items (Multiple Items Supported)</h3>
+                <p class="form-hint">Add one or more gold samples/items tested under this certificate</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="addItemBtn">➕ Add Another Item</button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table items-table" id="itemsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 3%;">#</th>
+                        <th style="width: 17%;">Item Name / Description *</th>
+                        <th style="width: 11%;">Gross Wt (g) *</th>
+                        <th style="width: 11%;">Net Wt (g)</th>
+                        <th style="width: 11%;">Purity (Karat) *</th>
+                        <th style="width: 9%;">Gold %</th>
+                        <th style="width: 10%;">Fine Gold (g)</th>
+                        <th style="width: 13%;">Method</th>
+                        <th style="width: 6%;">Qty</th>
+                        <th style="width: 9%;">Rate (₹)</th>
+                        <th style="width: 10%;">Amount (₹)</th>
+                        <th style="width: 4%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsBody">
+                    <!-- Default first row -->
+                    <tr class="item-row">
+                        <td class="row-num text-center">1</td>
+                        <td>
+                            <input type="text" name="item_name[]" class="form-input form-input-sm item-name-input" list="goldItemSuggestions" required placeholder="Ring / Chasani">
+                        </td>
+                        <td>
+                            <input type="number" step="0.001" min="0" name="gross_weight[]" class="form-input form-input-sm gross-weight-input" required placeholder="0.000">
+                        </td>
+                        <td>
+                            <input type="number" step="0.001" min="0" name="net_weight[]" class="form-input form-input-sm net-weight-input" placeholder="0.000">
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" min="0" max="24" name="purity_karat[]" class="form-input form-input-sm purity-karat-input" required placeholder="e.g. 22.00">
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" min="0" max="100" name="purity_percent[]" class="form-input form-input-sm purity-percent-input" readonly placeholder="0.00%">
+                        </td>
+                        <td>
+                            <input type="number" step="0.001" min="0" name="fine_gold_weight[]" class="form-input form-input-sm fine-gold-input" readonly placeholder="0.000">
+                        </td>
+                        <td>
+                            <select name="testing_method[]" class="form-input form-input-sm">
+                                <option value="Computerized XRF Assay" selected>Computerized XRF</option>
+                                <option value="Fire Assay (Cupellation)">Fire Assay</option>
+                                <option value="Touchstone & Acid">Touchstone & Acid</option>
+                                <option value="Specific Gravity Test">Specific Gravity</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" min="1" value="1" name="quantity[]" class="form-input form-input-sm qty-input" required>
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" min="0" value="{{ default_rate }}" name="testing_charge[]" class="form-input form-input-sm rate-input" required>
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" min="0" value="{{ default_rate }}" name="total_charge[]" class="form-input form-input-sm total-charge-input" readonly>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn-icon btn-remove-row" title="Remove Item" style="color: var(--danger, #e63946); background: transparent; border: none; cursor: pointer; font-size: 1.1rem;">🗑</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <datalist id="goldItemSuggestions">
+            <option value="Gold Ring (अंगूठी)">
+            <option value="Gold Chain (चेन)">
+            <option value="Gold Necklace (हार)">
+            <option value="Gold Coin (सिक्का)">
+            <option value="Gold Bangles (कंगन / चूड़ी)">
+            <option value="Gold Chasani (चासनी / सैंपल)">
+            <option value="Gold Bar / Piece (गोल्ड टुकड़ा)">
+            <option value="Gold Earrings (झुमकी)">
+            <option value="Gold Mangalsutra (मंगलसूत्र)">
+            <option value="Gold Pendant / Locket (लॉकेट)">
+            <option value="Gold Scrap (पुराना सोना)">
+        </datalist>
+    </div>
+
+    <!-- Summary & Payment Calculation Section -->
+    <div class="form-card" style="margin-bottom: 2rem;">
+        <h3 class="card-section-title">💰 Billing & Payment Summary</h3>
+        <div class="summary-grid">
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Notes / Assay Remarks</label>
+                    <textarea name="notes" class="form-input" rows="4" placeholder="Special remarks, hallmark purity stamp, laser mark, customer reference..."></textarea>
+                </div>
+            </div>
+            <div class="summary-box" style="background: var(--bg-hover, #f8f9fa); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border-color, #e9ecef);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                    <span>Testing Subtotal (परीक्षण उप-योग):</span>
+                    <strong>₹<span id="subtotalDisplay">0.00</span></strong>
+                    <input type="hidden" name="subtotal" id="subtotalInput" value="0.00">
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span>Additional Charges (अतिरिक्त शुल्क):</span>
+                    <input type="number" step="0.01" min="0" name="additional_charges" id="addChargesInput" class="form-input form-input-sm" style="width: 120px; text-align: right;" value="0.00">
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span>Discount (छूट):</span>
+                    <input type="number" step="0.01" min="0" name="discount" id="discountInput" class="form-input form-input-sm" style="width: 120px; text-align: right;" value="0.00">
+                </div>
+                <hr style="margin: 0.75rem 0; border: none; border-top: 1px solid var(--border-color, #dee2e6);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 1.15rem; color: #b8860b;">
+                    <strong>Grand Total (कुल देय राशि):</strong>
+                    <strong>₹<span id="grandTotalDisplay">0.00</span></strong>
+                    <input type="hidden" name="grand_total" id="grandTotalInput" value="0.00">
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span>Amount Received (प्राप्त राशि):</span>
+                    <input type="number" step="0.01" min="0" name="amount_received" id="receivedInput" class="form-input form-input-sm" style="width: 120px; text-align: right;" value="0.00">
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 1rem; color: var(--danger, #d90429);">
+                    <span>Remaining Balance (शेष राशि):</span>
+                    <strong>₹<span id="balanceDisplay">0.00</span></strong>
+                    <input type="hidden" name="balance_amount" id="balanceInput" value="0.00">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+            <a href="{{ url_for('gold_testing_list') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #d4af37 0%, #aa771c 100%); border-color: #aa771c; color: #fff;">
+                💾 Save & Generate Gold Assay Bill
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const defaultRate = {{ default_rate }};
+    const itemsBody = document.getElementById('itemsBody');
+    const addItemBtn = document.getElementById('addItemBtn');
+
+    function updateCalculations() {
+        let subtotal = 0;
+        const rows = itemsBody.querySelectorAll('tr.item-row');
+        
+        rows.forEach((row, idx) => {
+            row.querySelector('.row-num').textContent = idx + 1;
+            
+            const grossInput = row.querySelector('.gross-weight-input');
+            const netInput = row.querySelector('.net-weight-input');
+            const karatInput = row.querySelector('.purity-karat-input');
+            const percentInput = row.querySelector('.purity-percent-input');
+            const fineInput = row.querySelector('.fine-gold-input');
+            const qtyInput = row.querySelector('.qty-input');
+            const rateInput = row.querySelector('.rate-input');
+            const totalInput = row.querySelector('.total-charge-input');
+
+            const gross = parseFloat(grossInput.value) || 0;
+            // If net wt is not entered, default to gross wt
+            if (!netInput.value && gross > 0) {
+                netInput.value = gross.toFixed(3);
+            }
+            const net = parseFloat(netInput.value) || gross;
+            const karat = parseFloat(karatInput.value) || 0;
+
+            // Auto calculate purity percentage from karat: (Karat / 24) * 100
+            let pct = 0;
+            if (karat > 0) {
+                pct = (karat / 24) * 100;
+                percentInput.value = pct.toFixed(2);
+            } else {
+                percentInput.value = '';
+            }
+
+            // Auto calculate Fine Gold: net * (pct / 100)
+            if (net > 0 && pct > 0) {
+                const fineGold = net * (pct / 100);
+                fineInput.value = fineGold.toFixed(3);
+            } else {
+                fineInput.value = '';
+            }
+
+            const qty = parseInt(qtyInput.value) || 1;
+            const rate = parseFloat(rateInput.value) || 0;
+            const rowTotal = qty * rate;
+            totalInput.value = rowTotal.toFixed(2);
+            subtotal += rowTotal;
+        });
+
+        // Summary calculations
+        const addCharges = parseFloat(document.getElementById('addChargesInput').value) || 0;
+        const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+        const grandTotal = Math.max(0, subtotal + addCharges - discount);
+
+        document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2);
+        document.getElementById('subtotalInput').value = subtotal.toFixed(2);
+        document.getElementById('grandTotalDisplay').textContent = grandTotal.toFixed(2);
+        document.getElementById('grandTotalInput').value = grandTotal.toFixed(2);
+
+        // Auto set amount received to grand total if not touched yet
+        const receivedInput = document.getElementById('receivedInput');
+        if (!receivedInput.dataset.touched) {
+            receivedInput.value = grandTotal.toFixed(2);
+        }
+
+        const received = parseFloat(receivedInput.value) || 0;
+        const balance = Math.max(0, grandTotal - received);
+        document.getElementById('balanceDisplay').textContent = balance.toFixed(2);
+        document.getElementById('balanceInput').value = balance.toFixed(2);
+    }
+
+    document.getElementById('receivedInput').addEventListener('input', function() {
+        this.dataset.touched = 'true';
+        updateCalculations();
+    });
+
+    document.getElementById('addChargesInput').addEventListener('input', updateCalculations);
+    document.getElementById('discountInput').addEventListener('input', updateCalculations);
+
+    itemsBody.addEventListener('input', function(e) {
+        if (e.target.matches('input')) {
+            updateCalculations();
+        }
+    });
+
+    itemsBody.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-remove-row')) {
+            const rows = itemsBody.querySelectorAll('tr.item-row');
+            if (rows.length > 1) {
+                e.target.closest('tr.item-row').remove();
+                updateCalculations();
+            } else {
+                alert('At least one item is required in the testing receipt.');
+            }
+        }
+    });
+
+    addItemBtn.addEventListener('click', function() {
+        const rowCount = itemsBody.querySelectorAll('tr.item-row').length + 1;
+        const tr = document.createElement('tr');
+        tr.className = 'item-row';
+        tr.innerHTML = `
+            <td class="row-num text-center">${rowCount}</td>
+            <td>
+                <input type="text" name="item_name[]" class="form-input form-input-sm item-name-input" list="goldItemSuggestions" required placeholder="Ring / Chasani">
+            </td>
+            <td>
+                <input type="number" step="0.001" min="0" name="gross_weight[]" class="form-input form-input-sm gross-weight-input" required placeholder="0.000">
+            </td>
+            <td>
+                <input type="number" step="0.001" min="0" name="net_weight[]" class="form-input form-input-sm net-weight-input" placeholder="0.000">
+            </td>
+            <td>
+                <input type="number" step="0.01" min="0" max="24" name="purity_karat[]" class="form-input form-input-sm purity-karat-input" required placeholder="e.g. 22.00">
+            </td>
+            <td>
+                <input type="number" step="0.01" min="0" max="100" name="purity_percent[]" class="form-input form-input-sm purity-percent-input" readonly placeholder="0.00%">
+            </td>
+            <td>
+                <input type="number" step="0.001" min="0" name="fine_gold_weight[]" class="form-input form-input-sm fine-gold-input" readonly placeholder="0.000">
+            </td>
+            <td>
+                <select name="testing_method[]" class="form-input form-input-sm">
+                    <option value="Computerized XRF Assay" selected>Computerized XRF</option>
+                    <option value="Fire Assay (Cupellation)">Fire Assay</option>
+                    <option value="Touchstone & Acid">Touchstone & Acid</option>
+                    <option value="Specific Gravity Test">Specific Gravity</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" min="1" value="1" name="quantity[]" class="form-input form-input-sm qty-input" required>
+            </td>
+            <td>
+                <input type="number" step="0.01" min="0" value="${defaultRate}" name="testing_charge[]" class="form-input form-input-sm rate-input" required>
+            </td>
+            <td>
+                <input type="number" step="0.01" min="0" value="${defaultRate}" name="total_charge[]" class="form-input form-input-sm total-charge-input" readonly>
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn-icon btn-remove-row" title="Remove Item" style="color: var(--danger, #e63946); background: transparent; border: none; cursor: pointer; font-size: 1.1rem;">🗑</button>
+            </td>
+        `;
+        itemsBody.appendChild(tr);
+        updateCalculations();
+    });
+
+    updateCalculations();
+});
+</script>
+
+{% endblock %}
+

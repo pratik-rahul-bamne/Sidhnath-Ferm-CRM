@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Jewelry Inventory{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">💍 Jewelry Box</h1>
+        <p class="page-subtitle">Inventory of jewelry items</p>
+    </div>
+    <a href="{{ url_for('jewelry_add') }}" class="btn btn-primary">+ Add Item</a>
+</div>
+
+<form class="search-bar" method="GET">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search item or customer…" class="search-input">
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if search %}<a href="{{ url_for('jewelry_list') }}" class="btn btn-ghost">Clear</a>{% endif %}
+</form>
+
+<div class="table-card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th>Rate (₹)</th>
+                <th>Qty</th>
+                <th>Total (₹)</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td><strong>{{ item.item_name }}</strong></td>
+                <td>{{ item.category or '—' }}</td>
+                <td>₹{{ "%.2f"|format(item.rate) }}</td>
+                <td>{{ item.quantity }}</td>
+                <td class="amount-cell jewelry-amount"><strong>₹{{ "%.2f"|format(item.total_price) }}</strong></td>
+                <td>{{ item.customer_name or '—' }}</td>
+                <td>{{ item.date.strftime('%d %b %Y') }}</td>
+                <td class="action-cell">
+                    {% if session.role == 'admin' %}
+                    <form method="POST" action="{{ url_for('jewelry_delete', item_id=item.id) }}" style="display:inline"
+                        onsubmit="return confirm('Delete this item?')">
+                        <button type="submit" class="btn-sm btn-sm--danger">Delete</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="empty-row">No items found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

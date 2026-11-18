@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Gold Entries{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🥇 Gold Polish Entries</h1>
+        <p class="page-subtitle">Manage all gold polish jobs</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ url_for('gold_entry') }}" class="btn btn-primary">+ New Entry</a>
+        <a href="{{ url_for('gold_bill') }}" class="btn btn-secondary">Generate Bill</a>
+    </div>
+</div>
+
+<form class="search-bar" method="GET">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search by customer name or contact…"
+        class="search-input">
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if search %}<a href="{{ url_for('gold_list') }}" class="btn btn-ghost">Clear</a>{% endif %}
+</form>
+
+<div class="table-card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Weight (g)</th>
+                <th>Polish Type</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th>Added By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in entries %}
+            <tr>
+                <td>{{ e.id }}</td>
+                <td><strong>{{ e.customer_name }}</strong></td>
+                <td>{{ e.date.strftime('%d %b %Y') }}</td>
+                <td>{{ "%.3f"|format(e.gold_weight) }}</td>
+                <td>
+                    <span class="badge {% if e.polish_type == 'with_p' %}badge-blue{% else %}badge-gray{% endif %}">
+                        {{ 'With P' if e.polish_type == 'with_p' else 'Without P' }}
+                    </span>
+                </td>
+                <td>{{ e.contact_no or '—' }}</td>
+                <td>
+                    <span class="badge {% if e.status == 'exit' %}badge-green{% else %}badge-orange{% endif %}">
+                        {{ e.status | capitalize }}
+                    </span>
+                </td>
+                <td>{{ e.created_by_name or '—' }}</td>
+                <td class="action-cell">
+                    {% if e.status == 'entry' %}
+                    <form method="POST" action="{{ url_for('gold_update_status', entry_id=e.id) }}"
+                        style="display:inline">
+                        <input type="hidden" name="status" value="exit">
+                        <button type="submit" class="btn-sm btn-sm--success">Mark Exit</button>
+                    </form>
+                    {% endif %}
+                    <a href="{{ url_for('gold_bill') }}?entry_id={{ e.id }}" class="btn-sm btn-sm--primary">Bill</a>
+                    {% if session.role == 'admin' %}
+                    <form method="POST" action="{{ url_for('gold_delete_entry', entry_id=e.id) }}"
+                        style="display:inline" onsubmit="return confirm('Delete this entry?')">
+                        <button type="submit" class="btn-sm btn-sm--danger">Delete</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="empty-row">No entries found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

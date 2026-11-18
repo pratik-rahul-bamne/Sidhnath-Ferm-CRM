@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">⚙️ Settings</h1>
+        <p class="page-subtitle">Manage metal rates, testing service charges, users and system config</p>
+    </div>
+</div>
+
+<!-- Metal Rates Section -->
+<div class="settings-section">
+    <h2 class="settings-title">💱 Polish Metal Rates (प्रति ग्राम दर)</h2>
+    <div class="form-card">
+        <form method="POST" action="{{ url_for('settings') }}">
+            <input type="hidden" name="action" value="update_rates">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">🥈 Silver Price (₹/gram)</label>
+                    <input type="number" name="silver_rate" class="form-input" step="0.01" min="0"
+                        value="{{ rates.silver.price_per_gram if rates.silver else 100 }}" required>
+                    {% if rates.silver %}
+                    <small class="form-hint">Last updated: {{ rates.silver.updated_at.strftime('%d %b %Y %H:%M') if
+                        rates.silver.updated_at else 'N/A' }}</small>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🥇 Gold Price (₹/gram)</label>
+                    <input type="number" name="gold_rate" class="form-input" step="0.01" min="0"
+                        value="{{ rates.gold.price_per_gram if rates.gold else 7000 }}" required>
+                    {% if rates.gold %}
+                    <small class="form-hint">Last updated: {{ rates.gold.updated_at.strftime('%d %b %Y %H:%M') if
+                        rates.gold.updated_at else 'N/A' }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">💾 Save Metal Rates</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Testing Service Charges Section (Requirement 2 & 3: Configurable Testing Charges) -->
+<div class="settings-section" style="margin-top: 2rem;">
+    <h2 class="settings-title">🔬 Testing Service Charges (टंच परीक्षण सेवा शुल्क)</h2>
+    <div class="form-card">
+        <form method="POST" action="{{ url_for('settings') }}">
+            <input type="hidden" name="action" value="update_testing_charges">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">🔬 Default Gold Testing Charge (₹ / नग या सैंपल)</label>
+                    <input type="number" name="gold_test_rate" class="form-input" step="0.01" min="0"
+                        value="{{ service_charges.gold_testing.default_rate if service_charges.gold_testing else 100.0 }}" required>
+                    <small class="form-hint">Standard Computerized XRF Gold Assay Fee</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🧪 Default Silver Testing Charge (₹ / नग या सैंपल)</label>
+                    <input type="number" name="silver_test_rate" class="form-input" step="0.01" min="0"
+                        value="{{ service_charges.silver_testing.default_rate if service_charges.silver_testing else 50.0 }}" required>
+                    <small class="form-hint">Standard Silver Purity & Fineness Fee</small>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #2a9d8f 0%, #264653 100%);">
+                    💾 Save Testing Charges
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Users Section -->
+<div class="settings-section" style="margin-top: 2rem;">
+    <h2 class="settings-title">👥 User Management</h2>
+
+    <!-- Add User -->
+    <div class="form-card" style="margin-bottom:2rem">
+        <h3
+            style="margin-bottom:1.2rem;color:var(--text-secondary);font-size:0.95rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">
+            Add New User</h3>
+        <form method="POST" action="{{ url_for('settings') }}">
+            <input type="hidden" name="action" value="add_user">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" name="new_name" class="form-input" required placeholder="User full name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email *</label>
+                    <input type="email" name="new_email" class="form-input" required placeholder="user@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password *</label>
+                    <input type="password" name="new_password" class="form-input" required
+                        placeholder="Minimum 8 characters" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role *</label>
+                    <select name="new_role" class="form-input">
+                        <option value="user">User (Staff)</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">➕ Add User</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td><strong>{{ u.name }}</strong></td>
+                    <td>{{ u.email }}</td>
+                    <td><span class="badge {% if u.role == 'admin' %}badge-purple{% else %}badge-gray{% endif %}">{{
+                            u.role | capitalize }}</span></td>
+                    <td>{{ u.created_at.strftime('%d %b %Y') }}</td>
+                    <td>
+                        {% if u.id != session.user_id %}
+                        <form method="POST" action="{{ url_for('settings') }}" style="display:inline"
+                            onsubmit="return confirm('Delete user {{ u.name }}?')">
+                            <input type="hidden" name="action" value="delete_user">
+                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                            <button type="submit" class="btn-sm btn-sm--danger">Delete</button>
+                        </form>
+                        {% else %}
+                        <span class="badge badge-green">You</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

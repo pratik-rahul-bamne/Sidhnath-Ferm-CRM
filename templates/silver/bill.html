@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Silver Bill – Generate{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🥈 Silver Bill</h1>
+        <p class="page-subtitle">Generate a silver polish receipt</p>
+    </div>
+    <a href="{{ url_for('silver_bills_list') }}" class="btn btn-secondary">← All Bills</a>
+</div>
+
+<div class="form-card" style="max-width:800px">
+    <form method="POST" action="{{ url_for('silver_bill') }}" id="silverBillForm">
+
+        <div class="form-section-title">Customer Details</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">Customer Name *</label>
+                <input type="text" name="customer_name" class="form-input" required placeholder="Full name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date *</label>
+                <input type="date" name="date" class="form-input" value="{{ today }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Contact Number</label>
+                <input type="text" name="contact_no" class="form-input" placeholder="Optional">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Link to Entry</label>
+                <select name="entry_id" class="form-input" id="entrySelect" onchange="fillFromEntry()">
+                    <option value="">— Select open entry (optional) —</option>
+                    {% for e in open_entries %}
+                    <option value="{{ e.id }}" data-weight="{{ e.silver_weight }}" data-name="{{ e.customer_name }}"
+                        data-contact="{{ e.contact_no or '' }}">
+                        #{{ e.id }} · {{ e.customer_name }} · {{ "%.3f"|format(e.silver_weight) }}g
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-section-title">Weight & Pricing</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">Silver Weight (g) *</label>
+                <input type="number" name="silver_weight" id="sw" class="form-input calc" step="0.001" min="0" required
+                    placeholder="0.000" value="{{ rates.silver if rates else 0 }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Silver Price (₹/g) *</label>
+                <input type="number" name="silver_price" id="sp" class="form-input calc" step="0.01" min="0" required
+                    value="{{ rates.silver if rates else 100 }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Waste Deduction (₹)</label>
+                <input type="number" name="waste" id="waste" class="form-input calc" step="0.01" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Extra Weight Charge (₹)</label>
+                <input type="number" name="extra_weight" id="extra" class="form-input calc" step="0.01" min="0"
+                    value="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Silver Gram (g)</label>
+                <input type="number" name="silver_gram" id="sg" class="form-input calc" step="0.001" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Silver Gram Price (₹/g)</label>
+                <input type="number" name="silver_gram_price" id="sgp" class="form-input calc" step="0.01" min="0"
+                    value="0">
+            </div>
+        </div>
+
+        <!-- Live Total -->
+        <div class="total-preview">
+            <div>
+                <div class="total-label">Total Amount</div>
+                <div class="total-value" id="silverTotal">₹0.00</div>
+                <div class="total-formula">(Weight × Price) − Waste + Extra + (Gram × Gram Price)</div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">🧾 Generate Bill</button>
+            <a href="{{ url_for('silver_list') }}" class="btn btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function calcSilver() {
+        const sw = parseFloat(document.getElementById('sw').value) || 0;
+        const sp = parseFloat(document.getElementById('sp').value) || 0;
+        const w = parseFloat(document.getElementById('waste').value) || 0;
+        const ext = parseFloat(document.getElementById('extra').value) || 0;
+        const sg = parseFloat(document.getElementById('sg').value) || 0;
+        const sgp = parseFloat(document.getElementById('sgp').value) || 0;
+        const total = (sw * sp) - w + ext + (sg * sgp);
+        document.getElementById('silverTotal').textContent = '₹' + total.toFixed(2);
+    }
+    document.querySelectorAll('.calc').forEach(el => el.addEventListener('input', calcSilver));
+    calcSilver();
+
+    function fillFromEntry() {
+        const sel = document.getElementById('entrySelect');
+        const opt = sel.options[sel.selectedIndex];
+        if (opt && opt.value) {
+            document.querySelector('[name=customer_name]').value = opt.dataset.name || '';
+            document.querySelector('[name=contact_no]').value = opt.dataset.contact || '';
+            document.getElementById('sw').value = opt.dataset.weight || '';
+            calcSilver();
+        }
+    }
+</script>
+{% endblock %}

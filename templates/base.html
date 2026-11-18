@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Siddhanth Firm{% endblock %} – Business Management</title>
+  <meta name="description" content="Siddhanth Firm – Professional Silver, Gold & Jewelry Business Management">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+  {% if session.user_id %}
+  <!-- ───── SIDEBAR ───── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💎</div>
+      <div class="brand-info">
+        <span class="brand-name">Siddhanth</span>
+        <span class="brand-sub">Firm · BMS</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <div class="nav-section-label">Silver Polish</div>
+      <a href="{{ url_for('silver_list') }}"
+        class="nav-item {% if request.endpoint == 'silver_list' %}active{% endif %}">
+        <span class="nav-icon">🥈</span>
+        <span class="nav-label">Entries</span>
+      </a>
+      <a href="{{ url_for('silver_entry') }}"
+        class="nav-item {% if request.endpoint == 'silver_entry' %}active{% endif %}">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">New Entry</span>
+      </a>
+      <a href="{{ url_for('silver_bills_list') }}"
+        class="nav-item {% if request.endpoint == 'silver_bills_list' %}active{% endif %}">
+        <span class="nav-icon">🧾</span>
+        <span class="nav-label">Bills</span>
+      </a>
+      <a href="{{ url_for('silver_bill') }}"
+        class="nav-item {% if request.endpoint == 'silver_bill' %}active{% endif %}">
+        <span class="nav-icon">📄</span>
+        <span class="nav-label">Generate Bill</span>
+      </a>
+
+      <div class="nav-section-label">Gold Polish</div>
+      <a href="{{ url_for('gold_list') }}" class="nav-item {% if request.endpoint == 'gold_list' %}active{% endif %}">
+        <span class="nav-icon">🥇</span>
+        <span class="nav-label">Entries</span>
+      </a>
+      <a href="{{ url_for('gold_entry') }}" class="nav-item {% if request.endpoint == 'gold_entry' %}active{% endif %}">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">New Entry</span>
+      </a>
+      <a href="{{ url_for('gold_bills_list') }}"
+        class="nav-item {% if request.endpoint == 'gold_bills_list' %}active{% endif %}">
+        <span class="nav-icon">🧾</span>
+        <span class="nav-label">Bills</span>
+      </a>
+      <a href="{{ url_for('gold_bill') }}" class="nav-item {% if request.endpoint == 'gold_bill' %}active{% endif %}">
+        <span class="nav-icon">📄</span>
+        <span class="nav-label">Generate Bill</span>
+      </a>
+
+      <div class="nav-section-label">Gold Testing (टंच)</div>
+      <a href="{{ url_for('gold_testing_list') }}" class="nav-item {% if request.endpoint in ['gold_testing_list', 'gold_testing_view'] %}active{% endif %}">
+        <span class="nav-icon">🔬</span>
+        <span class="nav-label">Test Records</span>
+      </a>
+      <a href="{{ url_for('gold_testing_new') }}" class="nav-item {% if request.endpoint == 'gold_testing_new' %}active{% endif %}">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">New Gold Test</span>
+      </a>
+      <a href="{{ url_for('gold_testing_sample') }}" class="nav-item {% if request.endpoint == 'gold_testing_sample' %}active{% endif %}">
+        <span class="nav-icon">📜</span>
+        <span class="nav-label">Sample Bill</span>
+      </a>
+
+      <div class="nav-section-label">Silver Testing (टंच)</div>
+      <a href="{{ url_for('silver_testing_list') }}" class="nav-item {% if request.endpoint in ['silver_testing_list', 'silver_testing_view'] %}active{% endif %}">
+        <span class="nav-icon">🧪</span>
+        <span class="nav-label">Test Records</span>
+      </a>
+      <a href="{{ url_for('silver_testing_new') }}" class="nav-item {% if request.endpoint == 'silver_testing_new' %}active{% endif %}">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">New Silver Test</span>
+      </a>
+      <a href="{{ url_for('silver_testing_sample') }}" class="nav-item {% if request.endpoint == 'silver_testing_sample' %}active{% endif %}">
+        <span class="nav-icon">📜</span>
+        <span class="nav-label">Sample Bill</span>
+      </a>
+
+      <div class="nav-section-label">Jewelry Box</div>
+      <a href="{{ url_for('jewelry_list') }}"
+        class="nav-item {% if request.endpoint == 'jewelry_list' %}active{% endif %}">
+        <span class="nav-icon">💍</span>
+        <span class="nav-label">Inventory</span>
+      </a>
+      <a href="{{ url_for('jewelry_add') }}"
+        class="nav-item {% if request.endpoint == 'jewelry_add' %}active{% endif %}">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">Add Item</span>
+      </a>
+
+      <div class="nav-section-label">Analytics</div>
+      <a href="{{ url_for('reports') }}" class="nav-item {% if request.endpoint == 'reports' %}active{% endif %}">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Reports</span>
+      </a>
+
+      {% if session.role == 'admin' %}
+      <div class="nav-section-label">Admin</div>
+      <a href="{{ url_for('settings') }}" class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-avatar">{{ session.user_name[0].upper() }}</div>
+      <div class="user-details">
+        <span class="user-name">{{ session.user_name }}</span>
+        <span class="user-role role-{{ session.role }}">{{ session.role | capitalize }}</span>
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">⇥</a>
+    </div>
+  </aside>
+  <!-- Mobile Sidebar Backdrop (UI UX Pro Max) -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()" aria-hidden="true"></div>
+
+  <!-- ───── MAIN CONTENT ───── -->
+  <div class="main-wrapper">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+        <div class="search-wrapper">
+          <input type="text" id="globalSearch" class="global-search" placeholder="Search customer, contact number…"
+            autocomplete="off">
+          <div id="searchResults" class="search-dropdown"></div>
+        </div>
+      </div>
+      <div class="top-bar-right">
+        <span class="top-bar-date">{{ now().strftime('%A, %d %B %Y') if now else '' }}</span>
+        <a href="{{ url_for('logout') }}" class="btn-logout-sm">Logout</a>
+      </div>
+    </header>
+
+    <main class="content-area">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}" onclick="this.remove()">
+          {{ message }}
+          <button type="button" class="flash-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {% else %}
+  <!-- Not logged in: flash only -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-container flash-global">
+    {% for category, message in messages %}
+    <div class="flash flash-{{ category }}">{{ message }}<button onclick="this.parentElement.remove()">×</button></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+  {% endif %}
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+
+</html>

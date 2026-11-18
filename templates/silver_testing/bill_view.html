@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block title %}Silver Testing Certificate #{{ test.receipt_no }}{% endblock %}
+{% block content %}
+
+<div class="page-header bill-layout no-print">
+    <div>
+        <h1 class="page-title">🥈 Silver Testing Certificate & Bill</h1>
+        <p class="page-subtitle">Receipt #{{ test.receipt_no }} · Generated on {{ test.created_at.strftime('%d %b %Y, %I:%M %p') if test.created_at else '' }}</p>
+    </div>
+    <div class="page-actions">
+        <button onclick="window.print()" class="btn btn-secondary">🖨️ Direct Print</button>
+        <a href="{{ url_for('silver_testing_pdf', test_id=test.id) }}" class="btn btn-primary" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%); border-color: #334155; color: #fff;">
+            ⬇️ Download PDF
+        </a>
+        <a href="{{ url_for('silver_testing_list') }}" class="btn btn-outline">← All Silver Records</a>
+    </div>
+</div>
+
+<!-- Printable Professional A4 Invoice / Certificate -->
+<div class="invoice-container printable-card" id="printableInvoice">
+    <!-- Ornamental Top Border -->
+    <div class="invoice-silver-band"></div>
+
+    <!-- Header Section -->
+    <div class="invoice-header silver-header">
+        <div class="invoice-brand">
+            <div class="brand-crest silver-crest">
+                <span class="crest-symbol">❖</span>
+            </div>
+            <div class="brand-text">
+                <div class="firm-hindi">❖ श्री सिद्धनाथ बुलियन टंच ❖</div>
+                <div class="firm-english">SHREE SIDDHNATH BULLION TUNCH</div>
+                <div class="firm-tagline">वैज्ञानिक विधि से चाँदी की शुद्धता निकालने का एक मात्र विश्वसनीय प्रतिष्ठान</div>
+                <div class="firm-subline">Approved Silver Assay, Testing & Refining Laboratory</div>
+                <div class="firm-address">📍 काशीनाथ सेठ गली, अशराफ टोला, हरदोई-241001 (उ.प्र.)</div>
+                <div class="firm-contact">📞 मो.: 7376226999, 9936538678 &nbsp;|&nbsp; ✉️ contact@siddhanthfirm.com</div>
+            </div>
+        </div>
+        <div class="certificate-badge-box">
+            <div class="cert-stamp silver-stamp">
+                <div class="stamp-inner">
+                    <span class="stamp-star">卐 100% 卐</span>
+                    <span class="stamp-text">SILVER ASSAY</span>
+                    <span class="stamp-sub">PURITY TESTED</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificate Title Strip -->
+    <div class="cert-title-strip silver-theme">
+        <span class="cert-title-hi">卐 चाँदी की शुद्धता का प्रमाण-पत्र एवं बीजक 卐</span>
+        <span class="cert-divider">|</span>
+        <span class="cert-title-en">SILVER PURITY ASSAY CERTIFICATE & TAX INVOICE</span>
+    </div>
+
+    <!-- Metadata Grid -->
+    <div class="invoice-meta-grid">
+        <div class="meta-col">
+            <div class="meta-row">
+                <span class="meta-label">Certificate / Receipt No (रसीद सं.):</span>
+                <span class="meta-value highlight-num" style="color: #334155;">{{ test.receipt_no }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Testing Date (परीक्षण दिनांक):</span>
+                <span class="meta-value">{{ test.test_date.strftime('%d-%m-%Y') if test.test_date else '' }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Testing Method (विधि):</span>
+                <span class="meta-value">{{ items[0].testing_method if items else 'Computerized XRF Assay' }}</span>
+            </div>
+        </div>
+        <div class="meta-col">
+            <div class="meta-row">
+                <span class="meta-label">Customer / Party (प्रमाणित किया जाता है कि सर्वश्री):</span>
+                <span class="meta-value party-name">{{ test.customer_name }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Mobile No (मोबाइल सं.):</span>
+                <span class="meta-value">{{ test.contact_no or '—' }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Address (पता):</span>
+                <span class="meta-value">{{ test.address or 'Local / Hardoi' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testing Items Table -->
+    <div class="table-container">
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th style="width: 4%;">#</th>
+                    <th style="width: 25%;">Item Description<br><small>चाँदी आभूषण / वस्तु का विवरण</small></th>
+                    <th style="width: 14%; text-align: right;">Gross Wt (g)<br><small>सकल वजन</small></th>
+                    <th style="width: 14%; text-align: right;">Net Wt (g)<br><small>शुद्ध वजन</small></th>
+                    <th style="width: 18%; text-align: center;">Purity / Fineness (टंच)<br><small>चिन्ह [ प्रति हजार ]</small></th>
+                    <th style="width: 10%; text-align: center;">Qty<br><small>नग</small></th>
+                    <th style="width: 15%; text-align: right;">Amount (₹)<br><small>शुल्क</small></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="text-center">{{ loop.index }}</td>
+                    <td>
+                        <strong>{{ item.item_name }}</strong>
+                        {% if item.remarks %}
+                        <div class="item-sub-desc">{{ item.remarks }}</div>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">{{ "%.3f"|format(item.gross_weight) }}</td>
+                    <td style="text-align: right;">{{ "%.3f"|format(item.net_weight or item.gross_weight) }}</td>
+                    <td style="text-align: center; font-weight: 700; color: #1e293b;">
+                        <span class="chinha-box">{{ item.purity_fineness }}</span>
+                    </td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td style="text-align: right; font-weight: 600;">₹{{ "%.2f"|format(item.total_charge) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Calculations and Payment Breakdown -->
+    <div class="invoice-summary-grid">
+        <!-- Notes and Guarantee Text -->
+        <div class="terms-block silver-terms">
+            <div class="terms-title" style="color: #334155;">📌 Note & Statutory Terms (आवश्यक सूचना व नियम):</div>
+            <ol class="terms-list">
+                <li>नोट-1: शुद्धता के परीक्षण में हम पूरी सावधानी रखते हैं फिर भी 25/30 टुकड़े/तक की भिन्नता आ सकती है।</li>
+                <li>नोट-2: बाहर से काट कर लाए टुकड़े की जिम्मेदारी हम पर नहीं होगी।</li>
+                <li>परीक्षण वैज्ञानिक कंप्यूटर आधारित XRF एवं मानक टंच विधि द्वारा संपन्न किया गया है।</li>
+                <li>All assay disputes subject to Hardoi jurisdiction.</li>
+            </ol>
+            {% if test.notes %}
+            <div class="custom-note">
+                <strong>Assay Note:</strong> {{ test.notes }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Financial Summary -->
+        <div class="financial-block">
+            <table class="totals-table">
+                <tr>
+                    <td>Testing Subtotal (उप-योग):</td>
+                    <td style="text-align: right;">₹{{ "%.2f"|format(test.subtotal) }}</td>
+                </tr>
+                {% if test.additional_charges > 0 %}
+                <tr>
+                    <td>Additional Charges (अतिरिक्त):</td>
+                    <td style="text-align: right;">+₹{{ "%.2f"|format(test.additional_charges) }}</td>
+                </tr>
+                {% endif %}
+                {% if test.discount > 0 %}
+                <tr>
+                    <td>Discount (छूट):</td>
+                    <td style="text-align: right; color: #059669;">−₹{{ "%.2f"|format(test.discount) }}</td>
+                </tr>
+                {% endif %}
+                <tr class="grand-total-row silver-total-row">
+                    <td><strong>Grand Total (कुल योग):</strong></td>
+                    <td style="text-align: right;"><strong>₹{{ "%.2f"|format(test.grand_total) }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Amount Received (प्राप्त):</td>
+                    <td style="text-align: right; color: #059669;">₹{{ "%.2f"|format(test.amount_received) }}</td>
+                </tr>
+                <tr>
+                    <td>Balance Due (शेष):</td>
+                    <td style="text-align: right; color: {% if test.balance_amount > 0 %}#d90429{% else %}#059669{% endif %}; font-weight: 700;">
+                        ₹{{ "%.2f"|format(test.balance_amount) }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Payment Mode:</td>
+                    <td style="text-align: right;">{{ test.payment_method }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Signatures and Stamp Footer -->
+    <div class="invoice-signature-section">
+        <div class="sig-box">
+            <div class="sig-line"></div>
+            <div class="sig-title">Customer Acknowledgement</div>
+            <div class="sig-subtitle">ग्राहक के हस्ताक्षर</div>
+        </div>
+        <div class="hallmark-stamp">
+            <div class="stamp-circle silver-circle">
+                <div class="stamp-circle-inner">
+                    <span>श्री सिद्धनाथ</span>
+                    <span class="stamp-star">卐 100% 卐</span>
+                    <span>बुलियन टंच</span>
+                </div>
+            </div>
+        </div>
+        <div class="sig-box text-right">
+            <div class="sig-firm-stamp" style="color: #334155;">For Shree Siddhnath Bullion Tunch</div>
+            <div class="sig-line"></div>
+            <div class="sig-title">Authorised Signatory / Assayer</div>
+            <div class="sig-subtitle">सिद्धनाथ (पाँडुरंग मुम्बई वाले)</div>
+        </div>
+    </div>
+
+    <!-- Final Tagline -->
+    <div class="invoice-bottom-tagline" style="color: #475569;">
+        ✨ Purity is Our Surety · वैज्ञानिक विधि से शुद्धता की गारंटी · Thank You, Visit Again! ✨
+    </div>
+</div>
+
+<style>
+/* Silver Invoice Custom Styling */
+.invoice-silver-band {
+    height: 6px;
+    background: linear-gradient(90deg, #64748b 0%, #cbd5e1 50%, #475569 100%);
+    margin: -2rem -2rem 1.5rem -2rem;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+.silver-header {
+    border-bottom: 2px solid #64748b !important;
+}
+
+.silver-crest {
+    background: #f8fafc !important;
+    border: 2px solid #64748b !important;
+    color: #334155 !important;
+}
+
+.cert-stamp.silver-stamp .stamp-inner {
+    border: 2px dashed #64748b !important;
+    background: #f8fafc !important;
+}
+
+.cert-title-strip.silver-theme {
+    background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%) !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.silver-terms {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.silver-total-row {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-top: 2px solid #475569 !important;
+    border-bottom: 2px solid #475569 !important;
+}
+
+.silver-circle {
+    border: 2px double #475569 !important;
+    color: #334155 !important;
+    background: #f8fafc !important;
+}
+
+.chinha-box {
+    display: inline-block;
+    padding: 3px 8px;
+    border: 1px solid #94a3b8;
+    background: #f8fafc;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+/* Mobile Screen Adaptations */
+@media (max-width: 600px) {
+    .invoice-container {
+        padding: 1.25rem 0.85rem !important;
+        margin: 0.5rem auto !important;
+    }
+    .invoice-silver-band {
+        margin: -1.25rem -0.85rem 1rem -0.85rem !important;
+    }
+    .invoice-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem !important;
+    }
+    .invoice-brand {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+    .invoice-meta-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+    }
+    .invoice-summary-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+    .invoice-signatures {
+        flex-direction: column !important;
+        gap: 1.5rem !important;
+        align-items: flex-start !important;
+    }
+    .sig-box.text-right {
+        text-align: left !important;
+    }
+}
+</style>
+
+{% endblock %}
+

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Add Jewelry Item{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">💍 Add Jewelry Item</h1>
+        <p class="page-subtitle">Record a new jewelry box item</p>
+    </div>
+    <a href="{{ url_for('jewelry_list') }}" class="btn btn-ghost">← Back to Inventory</a>
+</div>
+<div class="form-card">
+    <form method="POST" action="{{ url_for('jewelry_add') }}">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">Item Name *</label>
+                <input type="text" name="item_name" class="form-input" required
+                    placeholder="e.g. Gold Ring, Silver Necklace">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <input type="text" name="category" class="form-input" placeholder="e.g. Ring, Necklace, Bracelet">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Rate (₹) *</label>
+                <input type="number" name="rate" id="rate" class="form-input calc-input" step="0.01" min="0" required
+                    placeholder="0.00" value="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Quantity *</label>
+                <input type="number" name="quantity" id="qty" class="form-input calc-input" min="1" step="1" required
+                    value="1">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Customer Name</label>
+                <input type="text" name="customer_name" class="form-input" placeholder="Optional – attach to customer">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date *</label>
+                <input type="date" name="date" class="form-input" value="{{ today }}" required>
+            </div>
+        </div>
+
+        <div class="total-preview total-preview--jewelry">
+            <span class="total-label">Total Price:</span>
+            <span class="total-value" id="jewelryTotal">₹0.00</span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">💍 Add Item</button>
+            <a href="{{ url_for('jewelry_list') }}" class="btn btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function calcJewelry() {
+        const rate = parseFloat(document.getElementById('rate').value) || 0;
+        const qty = parseInt(document.getElementById('qty').value) || 0;
+        document.getElementById('jewelryTotal').textContent = '₹' + (rate * qty).toFixed(2);
+    }
+    document.querySelectorAll('.calc-input').forEach(el => el.addEventListener('input', calcJewelry));
+    calcJewelry();
+</script>
+{% endblock %}

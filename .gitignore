@@ -1,0 +1,16 @@
+# Siddhanth Firm – .gitignore
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+*.sqlite3
+.venv/
+venv/
+env/
+dist/
+build/
+*.egg-info/
+.DS_Store
+Thumbs.db
+test_stitch.py

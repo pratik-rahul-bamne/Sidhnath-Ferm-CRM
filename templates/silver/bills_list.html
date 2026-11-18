@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Silver Bills{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">🧾 Silver Bills</h1>
+        <p class="page-subtitle">All generated silver polish bills</p>
+    </div>
+    <a href="{{ url_for('silver_bill') }}" class="btn btn-primary">+ Generate Bill</a>
+</div>
+
+<form class="search-bar" method="GET">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search by name or contact…" class="search-input">
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if search %}<a href="{{ url_for('silver_bills_list') }}" class="btn btn-ghost">Clear</a>{% endif %}
+</form>
+
+<div class="table-card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Weight</th>
+                <th>Price/g</th>
+                <th>Total</th>
+                <th>Contact</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in bills %}
+            <tr>
+                <td>SB-{{ "%04d"|format(b.id) }}</td>
+                <td><strong>{{ b.customer_name }}</strong></td>
+                <td>{{ b.date.strftime('%d %b %Y') }}</td>
+                <td>{{ "%.3f"|format(b.silver_weight) }}g</td>
+                <td>₹{{ "%.2f"|format(b.silver_price) }}</td>
+                <td class="amount-cell"><strong>₹{{ "%.2f"|format(b.total_amount) }}</strong></td>
+                <td>{{ b.contact_no or '—' }}</td>
+                <td class="action-cell">
+                    <a href="{{ url_for('silver_bill_view', bill_id=b.id) }}" class="btn-sm btn-sm--primary">View</a>
+                    <a href="{{ url_for('silver_bill_pdf', bill_id=b.id) }}" class="btn-sm btn-sm--success">PDF</a>
+                    {% if session.role == 'admin' %}
+                    <form method="POST" action="{{ url_for('silver_bill_delete', bill_id=b.id) }}"
+                        style="display:inline" onsubmit="return confirm('Delete bill?')">
+                        <button type="submit" class="btn-sm btn-sm--danger">Delete</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="empty-row">No bills found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
